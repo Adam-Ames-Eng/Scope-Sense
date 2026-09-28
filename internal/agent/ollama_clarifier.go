@@ -65,12 +65,12 @@ var allowedCategories = map[string]bool{
 const maxDescriptionLength = 2000
 
 type ollamaChatRequest struct {
-	Model    string         `json:"model"`
-	Messages []chatMessage  `json:"messages"`
-	Format   string         `json:"format"` // "json" tells Ollama to constrain output to valid JSON
-	Think    bool           `json:"think"`  // false: qwen2.5:7b-instruct isn't a reasoning model, so this is a no-op here; left in place in case the model is swapped for one that does emit a reasoning block, which would otherwise break JSON parsing
-	Stream   bool           `json:"stream"`
-	Options  ollamaOptions  `json:"options"`
+	Model    string        `json:"model"`
+	Messages []chatMessage `json:"messages"`
+	Format   string        `json:"format"` // "json" tells Ollama to constrain output to valid JSON
+	Think    bool          `json:"think"`  // false: qwen2.5:7b-instruct isn't a reasoning model, so this is a no-op here; left in place in case the model is swapped for one that does emit a reasoning block, which would otherwise break JSON parsing
+	Stream   bool          `json:"stream"`
+	Options  ollamaOptions `json:"options"`
 }
 
 type ollamaOptions struct {
@@ -98,9 +98,6 @@ func (c *OllamaClarifier) Clarify(ctx context.Context, rawDescription string) (*
 	rawDescription = truncate(rawDescription, maxDescriptionLength)
 
 	languageInstruction := "Respond in English for the scope, deliverables, and clarifying_questions fields below — do not use Persian."
-	if looksPersian(rawDescription) {
-		languageInstruction = "پاسخ را برای فیلدهای scope و deliverables و clarifying_questions در ادامه، فقط به زبان فارسی بنویس، نه انگلیسی."
-	}
 
 	userContent := "<client_description>\n" + rawDescription + "\n</client_description>\n\n" + languageInstruction
 
@@ -164,10 +161,6 @@ func (c *OllamaClarifier) Clarify(ctx context.Context, rawDescription string) (*
 // on its own, especially for short descriptions — so we tell it
 // explicitly instead.
 var persianScript = regexp.MustCompile(`[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{FB50}-\x{FEFF}]`)
-
-func looksPersian(s string) bool {
-	return persianScript.MatchString(s)
-}
 
 // truncate cuts s to at most n runes, to bound how much untrusted
 // client text is ever sent to the model.
